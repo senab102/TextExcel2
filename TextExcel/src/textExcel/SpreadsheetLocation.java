@@ -1,26 +1,29 @@
+//Sena Hernandez
+//3/12/18
+//1st Period
 package textExcel;
 
 //Update this file with your own code.
 
-public class SpreadsheetLocation implements Location
-{
-    @Override
-    public int getRow()
-    {
-        // TODO Auto-generated method stub
-        return 0;
-    }
+public class SpreadsheetLocation implements Location {
+	private String cellName;
 
-    @Override
-    public int getCol()
-    {
-        // TODO Auto-generated method stub
-        return 0;
-    }
-    
-    public SpreadsheetLocation(String cellName)
-    {
-        // TODO: Fill this out with your own code
-    }
+	public SpreadsheetLocation(String cellName) {
+		this.cellName = cellName.toUpperCase();
+	}
+
+
+	public int getRow() {
+		return Integer.parseInt(this.cellName.substring(1))-1;
+	}
+
+	public int getCol() {
+		char c = this.cellName.charAt(0);
+		return (int)c - (int)'A';
+	}
 
 }
+
+
+
+
