@@ -4,33 +4,44 @@
 
 package textExcel;
 
-
-
-//Update this file with your own code.
-
 public class Spreadsheet implements Grid {
 	private Cell[][] cells;
+
 	public Spreadsheet() {
 		cells = new Cell[getRows()][getCols()];
-		clear();
+		clearGrid();
 	}
-	
+
 	public String processCommand(String command) {
-		String Command1 = command.toLowerCase();
-		if(Command1.equals("clear")) {
-			clear();
-		} else if(Command1.startsWith("clear")) {
-			SpreadsheetLocation loc = new SpreadsheetLocation(command.split(" ")[1]);
-			cells[loc.getRow()][loc.getCol()] = new EmptyCell();
-		} else if(command.contains("=")) {
-			String[] parts = command.split(" ", 3);
-			SpreadsheetLocation loc = new SpreadsheetLocation(parts[0]);
-			cells[loc.getRow()][loc.getCol()] = new TextCell(parts[2].substring(1, parts[2].length() - 1));
+		if (command.contains("=")) {
+			// assignment
+			String[] parts = command.split(" = ", 2);
+			assign(parts);
+			return getGridText();
+		} else if (command.toUpperCase().contains("CLEAR ")) {
+			// clear one cell
+			String[] parts = command.split(" ");
+			SpreadsheetLocation loc = new SpreadsheetLocation(parts[1]);
+			this.cells[loc.getRow()][loc.getCol()] = new EmptyCell();
+			return getGridText();
+		} else if (command.toUpperCase().contains("CLEAR")) {
+			// clear whole cell
+			clearGrid();
+			return getGridText();
 		} else {
+			// inspect the cell
 			SpreadsheetLocation loc = new SpreadsheetLocation(command);
-			return cells[loc.getRow()][loc.getCol()].fullCellText();
+			return getCell(loc).fullCellText();
 		}
-		return getGridText();
+
+	}
+
+	private void clearGrid() {
+		for (int i = 0; i < getRows(); i++) {
+			for (int j = 0; j < getCols(); j++) {
+				this.cells[i][j] = new EmptyCell();
+			}
+		}
 	}
 
 	public int getRows() {
@@ -41,39 +52,49 @@ public class Spreadsheet implements Grid {
 		return 12;
 	}
 
+	// call on certain cell
 	public Cell getCell(Location loc) {
 		return this.cells[loc.getRow()][loc.getCol()];
 	}
 
-	//return a single string containing the entire spreadsheet grid
+	public Cell getCell(int i, int j) {
+		return this.cells[i][j];
+	}
+
+	// creates the grid of the spreadsheet
 	public String getGridText() {
 		String output = "   |";
-		String padding;
-		for(int i = 0; i < getCols(); i++) {
-			output += (char)(i + (int)'A') + "         |";
+		for (int i = 0; i < getCols(); i++) {
+			output = output + (char) ((int) 'A' + i);
+			output = output + "         |";
 		}
-		output += "\n";
-		for(int i = 0; i < getRows(); i++) {
-			if(i < 9) {
-				padding = "  ";
+		output = output + "\n";
+		for (int i = 1; i <= getRows(); i++) {
+			if (i <= 9) {
+				output = output + i + "  |";
 			} else {
-				padding = " ";
+				output = output + i + " |";
 			}
-			output += (i + 1) + padding + "|";
-			for(int j = 0; j < getCols(); j++) {
-				output += cells[i][j].abbreviatedCellText() + "|";
+			for (int j = 0; j < getCols(); j++) {
+				output = output + this.cells[i - 1][j].abbreviatedCellText() + "|";
 			}
-			output += "\n";
+			output = output + "\n";
 		}
 		return output;
 	}
 
-	//clear cell
-	private void clear() {
-		for(int i = 0; i < getRows(); i++) {
-			for(int j = 0; j < getCols(); j++) {
-				cells[i][j] = new EmptyCell();
-			}
+	// different assignments depending on whether what's being passed in is text,
+	// percent, formula, or value
+	public void assign(String[] parts) {
+		SpreadsheetLocation loc = new SpreadsheetLocation(parts[0]);
+		if (parts[1].contains("\"")) {
+			this.cells[loc.getRow()][loc.getCol()] = new TextCell(parts[1].substring(1, parts[1].length() - 1));
+		} else if (parts[1].contains("%")) {
+			this.cells[loc.getRow()][loc.getCol()] = new PercentCell(parts[1]);
+		} else if (parts[1].contains("(")) {
+			this.cells[loc.getRow()][loc.getCol()] = new FormulaCell(parts[1], this);
+		} else {
+			this.cells[loc.getRow()][loc.getCol()] = new ValueCell(parts[1]);
 		}
 	}
 
